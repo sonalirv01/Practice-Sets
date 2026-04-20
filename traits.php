@@ -27,7 +27,57 @@ trait FileHandler {
     }
 }
 class FileLogger {
-    use Logger, FileHandler; // Using traits
+    use Logger, FileHandler {
+        Logger::log as traitLog;
+        FileHandler::open as traitOpen;
+        FileHandler::close as traitClose;
+    }
+
+    protected $handle = null;
+    protected $filename = '';
+    protected $mode = 'a';
+    protected $dateFormat = 'Y-m-d H:i:s';
+
+    // Open file (overrides trait behavior to use real file handle)
+    public function open($filename, $mode = 'a') {
+        $this->filename = $filename;
+        $this->mode = $mode;
+        $this->handle = @fopen($filename, $mode);
+        if ($this->handle === false) {
+            throw new RuntimeException("Unable to open file: {$filename}");
+        }
+        // keep trait behavior (echo) for demonstration
+        $this->traitOpen($filename);
+        return true;
+    }
+
+    // Close file (overrides trait to close actual handle)
+    public function close() {
+        if ($this->handle && is_resource($this->handle)) {
+            fflush($this->handle);
+            fclose($this->handle);
+            $this->handle = null;
+        }
+        // keep trait behavior (echo)
+        $this->traitClose();
+    }
+
+    // Enhanced log: formats with timestamp, optional level, writes to both output and file
+    public function log($message, $level = 'INFO') {
+        $timestamp = date($this->dateFormat);
+        $formatted = "[{$timestamp}] [{$level}]: {$message}";
+        // use trait Logger to output (keeps existing echo behavior)
+        $this->traitLog($formatted);
+        // also write to file if open
+        if ($this->handle && is_resource($this->handle)) {
+            fwrite($this->handle, $formatted . PHP_EOL);
+        }
+    }
+
+    // Optional helper to change date format
+    public function setDateFormat($format) {
+        $this->dateFormat = $format;
+    }
 }
 // Usage
 $fileLogger = new FileLogger();
