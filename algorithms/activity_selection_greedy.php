@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
+
 /*
 Difficulty: Intermediate
-Description:
+Description: 
 - Activity Selection greedily picks activities with earliest finishing time to maximize non-overlapping activities.
 
 When to Use:
